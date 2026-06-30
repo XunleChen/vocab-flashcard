@@ -95,6 +95,10 @@ h1 { text-align: center; color: #fff; margin-bottom: 20px; font-size: 1.8em; tex
 .modal-btn-secondary:hover { background: #eee; }
 .modal-btn-danger { background: #fff; color: #ff5252; border: 1px solid #ff5252; }
 .modal-btn-danger:hover { background: #fff5f5; }
+/* Speak button */
+.speak-btn { margin-top: 15px; padding: 10px 24px; border: 2px solid rgba(255,255,255,0.7); border-radius: 20px; background: rgba(255,255,255,0.2); color: #fff; font-size: 16px; cursor: pointer; transition: all 0.3s; }
+.speak-btn:hover { background: rgba(255,255,255,0.4); transform: scale(1.05); }
+.speak-btn:active { transform: scale(0.95); }
 </style>
 </head>
 <body>
@@ -128,6 +132,7 @@ h1 { text-align: center; color: #fff; margin-bottom: 20px; font-size: 1.8em; tex
         <div class="card-word" id="cardWord">--</div>
         <div class="card-phonetic" id="cardPhonetic"></div>
         <div class="card-pos" id="cardPos"></div>
+        <button class="speak-btn" onclick="event.stopPropagation();speakWord()">🔊 点读</button>
       </div>
       <div class="card-face card-back">
         <div class="card-meaning" id="cardMeaning">--</div>
@@ -899,6 +904,27 @@ function showCard() {
 function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); }
 function nextCard() { currentIndex++; showCard(); }
 function prevCard() { currentIndex--; showCard(); }
+
+function speakWord() {
+  var unitWords = getUnitWords();
+  var w = unitWords[currentIndex];
+  if (!w) return;
+  var text = w.word;
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-GB';
+    utterance.rate = 0.8;
+    // Try to find an English voice
+    var voices = window.speechSynthesis.getVoices();
+    for (var i = 0; i < voices.length; i++) {
+      if (voices[i].lang.indexOf('en') === 0) { utterance.voice = voices[i]; break; }
+    }
+    window.speechSynthesis.speak(utterance);
+  } else {
+    alert('当前浏览器不支持语音播放，请使用 Chrome 或 Edge。');
+  }
+}
 
 function markWord(level) {
   var unitWords = getUnitWords();
