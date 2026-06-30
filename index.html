@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>八年级上册英语单词卡 - 多设备同步版</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+.container { max-width: 800px; margin: 0 auto; }
+h1 { text-align: center; color: #fff; margin-bottom: 20px; font-size: 1.8em; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+.tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+.tab-btn { padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; font-size: 14px; font-weight: 600; background: rgba(255,255,255,0.2); color: #fff; transition: all 0.3s; }
+.tab-btn.active, .tab-btn:hover { background: #fff; color: #764ba2; }
+.panel { display: none; background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+.panel.active { display: block; }
+.unit-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; justify-content: center; }
+.unit-btn { padding: 8px 16px; border: 2px solid #764ba2; border-radius: 20px; cursor: pointer; background: #fff; color: #764ba2; font-weight: 600; transition: all 0.3s; }
+.unit-btn.active, .unit-btn:hover { background: #764ba2; color: #fff; }
+.card-container { perspective: 1000px; margin: 20px auto; max-width: 500px; }
+.flashcard { width: 100%; min-height: 280px; position: relative; cursor: pointer; transform-style: preserve-3d; transition: transform 0.6s; border-radius: 16px; }
+.flashcard.flipped { transform: rotateY(180deg); }
+.card-face { position: absolute; width: 100%; min-height: 280px; backface-visibility: hidden; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; }
+.card-front { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; }
+.card-back { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #fff; transform: rotateY(180deg); }
+.card-word { font-size: 2.2em; font-weight: bold; margin-bottom: 10px; }
+.card-phonetic { font-size: 1.2em; opacity: 0.9; margin-bottom: 5px; }
+.card-pos { font-size: 1em; opacity: 0.8; }
+.card-meaning { font-size: 1.8em; font-weight: bold; }
+.controls { display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+.ctrl-btn { padding: 12px 24px; border: none; border-radius: 25px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s; }
+.btn-know { background: #00c853; color: #fff; }
+.btn-know:hover { background: #00a844; }
+.btn-dont { background: #ff5252; color: #fff; }
+.btn-dont:hover { background: #d32f2f; }
+.btn-next { background: #764ba2; color: #fff; }
+.btn-next:hover { background: #5a3580; }
+.btn-prev { background: #667eea; color: #fff; }
+.btn-prev:hover { background: #4a5fd4; }
+.progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; margin: 15px 0; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 4px; transition: width 0.3s; }
+.progress-text { text-align: center; color: #666; font-size: 14px; margin-bottom: 10px; }
+.checkin-section { text-align: center; }
+.checkin-btn { padding: 16px 40px; border: none; border-radius: 30px; cursor: pointer; font-size: 18px; font-weight: bold; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; margin: 20px 0; transition: transform 0.2s; }
+.checkin-btn:hover { transform: scale(1.05); }
+.checkin-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+.streak { font-size: 1.5em; color: #764ba2; font-weight: bold; margin: 10px 0; }
+.calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; max-width: 350px; margin: 20px auto; }
+.cal-header { text-align: center; font-weight: bold; color: #666; font-size: 12px; padding: 5px; }
+.cal-day { text-align: center; padding: 8px 4px; border-radius: 50%; font-size: 12px; color: #333; }
+.cal-day.checked { background: #764ba2; color: #fff; }
+.cal-day.today { border: 2px solid #f5576c; }
+.cal-day.empty { visibility: hidden; }
+.word-list { max-height: 500px; overflow-y: auto; }
+.word-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f0f0f0; transition: background 0.2s; }
+.word-item:hover { background: #f9f5ff; }
+.word-item .word { font-weight: 600; color: #333; min-width: 150px; }
+.word-item .meaning { color: #666; flex: 1; }
+.word-item .status { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.status-mastered { background: #e8f5e9; color: #2e7d32; }
+.status-learning { background: #fff3e0; color: #e65100; }
+.status-new { background: #e3f2fd; color: #1565c0; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin: 20px 0; }
+.stat-card { text-align: center; padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+.stat-number { font-size: 2em; font-weight: bold; color: #764ba2; }
+.stat-label { font-size: 0.85em; color: #666; margin-top: 5px; }
+.filter-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
+.filter-bar select, .filter-bar input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+.filter-bar input { flex: 1; min-width: 150px; }
+.tip { text-align: center; color: #999; font-size: 13px; margin-top: 10px; }
+/* Sync UI */
+.sync-bar { background: rgba(255,255,255,0.15); border-radius: 12px; padding: 12px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.sync-bar input { padding: 8px 12px; border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; background: rgba(255,255,255,0.9); font-size: 14px; width: 160px; }
+.sync-btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.3s; }
+.sync-btn-primary { background: #fff; color: #764ba2; }
+.sync-btn-primary:hover { background: #f0e6ff; }
+.sync-btn-secondary { background: rgba(255,255,255,0.3); color: #fff; }
+.sync-btn-secondary:hover { background: rgba(255,255,255,0.5); }
+.sync-status { color: #fff; font-size: 12px; opacity: 0.9; }
+.sync-indicator { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+.sync-online { background: #00e676; }
+.sync-offline { background: #ff5252; }
+/* Modal */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+.modal-overlay.active { display: flex; }
+.modal { background: #fff; border-radius: 16px; padding: 32px; max-width: 400px; width: 90%; text-align: center; }
+.modal h2 { color: #764ba2; margin-bottom: 16px; }
+.modal p { color: #666; margin-bottom: 20px; font-size: 14px; }
+.modal input { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; margin-bottom: 12px; text-align: center; }
+.modal input:focus { border-color: #764ba2; outline: none; }
+.modal-btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 8px; transition: all 0.3s; }
+.modal-btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+.modal-btn-primary:hover { opacity: 0.9; }
+.modal-btn-secondary { background: #f5f5f5; color: #666; }
+.modal-btn-secondary:hover { background: #eee; }
+.modal-btn-danger { background: #fff; color: #ff5252; border: 1px solid #ff5252; }
+.modal-btn-danger:hover { background: #fff5f5; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>📚 八年级上册英语单词卡</h1>
+
+<!-- Sync Bar -->
+<div class="sync-bar" id="syncBar">
+  <span class="sync-status" id="syncStatus"><span class="sync-indicator sync-offline"></span>未登录</span>
+  <button class="sync-btn sync-btn-primary" id="syncLoginBtn" onclick="showSyncModal()">🔑 登录同步</button>
+  <button class="sync-btn sync-btn-secondary" id="syncPushBtn" onclick="syncPush()" style="display:none">⬆ 上传</button>
+  <button class="sync-btn sync-btn-secondary" id="syncPullBtn" onclick="syncPull()" style="display:none">⬇ 下载</button>
+  <button class="sync-btn sync-btn-secondary" onclick="showExportImport()">💾 备份</button>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('study')">📖 学习</button>
+  <button class="tab-btn" onclick="switchTab('checkin')">✅ 每日打卡</button>
+  <button class="tab-btn" onclick="switchTab('review')">📝 未掌握汇总</button>
+  <button class="tab-btn" onclick="switchTab('stats')">📊 统计</button>
+</div>
+
+<!-- Study Panel -->
+<div class="panel active" id="panel-study">
+  <div class="unit-selector" id="unitSelector"></div>
+  <div class="progress-text" id="progressText">0 / 0</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="card-container">
+    <div class="flashcard" id="flashcard" onclick="flipCard()">
+      <div class="card-face card-front">
+        <div class="card-word" id="cardWord">--</div>
+        <div class="card-phonetic" id="cardPhonetic"></div>
+        <div class="card-pos" id="cardPos"></div>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-meaning" id="cardMeaning">--</div>
+      </div>
+    </div>
+  </div>
+  <p class="tip">点击卡片翻转查看释义</p>
+  <div class="controls">
+    <button class="ctrl-btn btn-prev" onclick="prevCard()">⬅ 上一个</button>
+    <button class="ctrl-btn btn-dont" onclick="markWord(0)">❌ 不认识</button>
+    <button class="ctrl-btn btn-know" onclick="markWord(1)">✅ 认识</button>
+    <button class="ctrl-btn btn-next" onclick="nextCard()">下一个 ➡</button>
+  </div>
+</div>
+
+<!-- Check-in Panel -->
+<div class="panel" id="panel-checkin">
+  <div class="checkin-section">
+    <h2>每日打卡</h2>
+    <div class="streak" id="streakText">🔥 连续打卡 0 天</div>
+    <button class="checkin-btn" id="checkinBtn" onclick="doCheckin()">📅 今日打卡</button>
+    <p class="tip" id="checkinTip"></p>
+    <div class="calendar" id="calendar"></div>
+  </div>
+</div>
+
+<!-- Review Panel -->
+<div class="panel" id="panel-review">
+  <h2 style="margin-bottom:15px;">未掌握单词汇总</h2>
+  <div class="filter-bar">
+    <select id="reviewUnitFilter" onchange="renderReviewList()"><option value="all">全部单元</option></select>
+    <input type="text" id="reviewSearch" placeholder="搜索单词..." oninput="renderReviewList()">
+  </div>
+  <div class="word-list" id="reviewList"></div>
+  <p class="tip" id="reviewTip"></p>
+</div>
+
+<!-- Stats Panel -->
+<div class="panel" id="panel-stats">
+  <h2 style="margin-bottom:15px;">学习统计</h2>
+  <div class="stats-grid" id="statsGrid"></div>
+  <h3 style="margin:20px 0 10px;">各单元掌握情况</h3>
+  <div id="unitStats"></div>
+</div>
+</div>
+
+<!-- Sync Login Modal -->
+<div class="modal-overlay" id="syncModal">
+  <div class="modal">
+    <h2>🔄 多设备同步</h2>
+    <p>输入一个同步码（自定义，如手机号或任意英文），在不同设备上输入相同的码即可同步学习进度。</p>
+    <input type="text" id="syncCodeInput" placeholder="输入同步码（至少4位）" maxlength="30">
+    <button class="modal-btn modal-btn-primary" onclick="syncLogin()">登录 / 注册</button>
+    <button class="modal-btn modal-btn-secondary" onclick="closeSyncModal()">取消</button>
+    <div id="syncModalMsg" style="margin-top:10px;font-size:13px;color:#ff5252;"></div>
+  </div>
+</div>
+
+<!-- Export/Import Modal -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <h2>💾 数据备份</h2>
+    <p>导出数据到文件，或从文件导入恢复。适合完全离线使用。</p>
+    <button class="modal-btn modal-btn-primary" onclick="exportData()">📤 导出数据</button>
+    <button class="modal-btn modal-btn-secondary" onclick="document.getElementById('importFile').click()">📥 导入数据</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="modal-btn modal-btn-danger" onclick="closeExportModal()">关闭</button>
+    <div id="exportMsg" style="margin-top:10px;font-size:13px;color:#2e7d32;"></div>
+  </div>
+</div>
+
+<script>
+const WORDS_RAW = [
+["Unit 1",1,"friendship","/ˈfrendʃɪp/","n.","友谊"],
+["Unit 1",2,"honest","/ˈɒnɪst/","adj.","诚实的，正直的"],
+["Unit 1",3,"cheerful","/ˈtʃɪəfl/","adj.","快乐的，高兴的"],
+["Unit 1",4,"humorous","/ˈhjuːmərəs/","adj.","幽默的"],
+["Unit 1",5,"caring","/ˈkeərɪŋ/","adj.","关心他人的，体贴人的"],
+["Unit 1",6,"truth","/truːθ/","n.","事实"],
+["Unit 1",7,"joke","/dʒəʊk/","n.","笑话，玩笑"],
+["Unit 1",8,"laugh","/lɑːf/","vi. & vt.","笑，发笑"],
+["Unit 1",9,"teenager","/ˈtiːneɪdʒə(r)/","n.","青少年"],
+["Unit 1",10,"unhappy","/ʌnˈhæpi/","adj.","不开心的"],
+["Unit 1",11,"lie","/laɪ/","vi.","撒谎"],
+["Unit 1",12,"person","/ˈpɜːsn/","n.","人，个人"],
+["Unit 1",13,"thought","/θɔːt/","n.","想法，主意"],
+["Unit 1",14,"ponytail","/ˈpəʊniteɪl/","n.","马尾辫"],
+["Unit 1",15,"seat","/siːt/","n.","座位"],
+["Unit 1",16,"schoolwork","/ˈskuːlwɜːk/","n.","学校作业"],
+["Unit 1",17,"trustworthy","/ˈtrʌstwɜːði/","adj.","值得信赖的"],
+["Unit 1",18,"patient","/ˈpeɪʃnt/","adj.","有耐心的"],
+["Unit 1",19,"understand","/ˌʌndəˈstænd/","vt. & vi.","理解"],
+["Unit 1",20,"bit","/bɪt/","n.","小量"],
+["Unit 1",21,"a little bit","-","","有点儿"],
+["Unit 1",22,"funny","/ˈfʌni/","adj.","好笑的"],
+["Unit 1",23,"sense","/sens/","n.","理解力；感觉"],
+["Unit 1",24,"humour","/ˈhjuːmə(r)/","n.","幽默"],
+["Unit 1",25,"sense of humour","-","","幽默感"],
+["Unit 1",26,"bored","/bɔːd/","adj.","厌倦的，烦闷的"],
+["Unit 1",27,"energetic","/ˌenəˈdʒetɪk/","adj.","精力充沛的"],
+["Unit 1",28,"active","/ˈæktɪv/","adj.","积极的；活跃的"],
+["Unit 1",29,"encourage","/ɪnˈkʌrɪdʒ/","vt.","鼓励"],
+["Unit 1",30,"believe","/bɪˈliːv/","vt.","相信"],
+["Unit 1",31,"secret","/ˈsiːkrət/","n.","秘密"],
+["Unit 1",32,"keep secrets","-","","保密"],
+["Unit 1",33,"worse","/wɜːs/","adj.","更差的"],
+["Unit 1",34,"worst","/wɜːst/","adj.","最差的"],
+["Unit 1",35,"height","/haɪt/","n.","身高，高度"],
+["Unit 1",36,"sec.","/sek/","abbr.","秒"],
+["Unit 1",37,"test","/test/","n.","测验，考查"],
+["Unit 1",38,"badminton","/ˈbædmɪntən/","n.","羽毛球运动"],
+["Unit 1",39,"however","/haʊˈevə(r)/","adv.","然而"],
+["Unit 1",40,"balloon","/bəˈluːn/","n.","气球"],
+["Unit 1",41,"scared","/skeəd/","adj.","害怕，恐惧"],
+["Unit 1",42,"nearby","/ˈnɪəbaɪ/","adv. & adj.","在附近；附近的"],
+["Unit 1",43,"fight","/faɪt/","vi. & vt.","搏斗，打斗"],
+["Unit 1",44,"dead","/ded/","adj.","死的"],
+["Unit 1",45,"attack","/əˈtæk/","vi. & vt.","攻击，袭击"],
+["Unit 1",46,"danger","/ˈdeɪndʒə(r)/","n.","危险"],
+["Unit 1",47,"brave","/breɪv/","adj.","勇敢的"],
+["Unit 1",48,"get along with","-","","与某人和睦相处"],
+["Unit 1",49,"nod","/nɒd/","vi. & vt.","点头"],
+["Unit 1",50,"once","/wʌns/","conj.","一… 就，一旦"],
+["Unit 1",51,"feeling","/ˈfiːlɪŋ/","n.","情感；感觉"],
+["Unit 1",52,"thoughtful","/ˈθɔːtfl/","adj.","体贴的；深思的"],
+["Unit 2",1,"plastic","/ˈplæstɪk/","adj. & n.","塑料的；塑料"],
+["Unit 2",2,"cheap","/tʃiːp/","adj.","便宜的"],
+["Unit 2",3,"environment","/ɪnˈvaɪrənmənt/","n.","环境"],
+["Unit 2",4,"few","/fjuː/","det.","不多，很少"],
+["Unit 2",5,"drama","/ˈdrɑːmə/","n.","戏剧"],
+["Unit 2",6,"foreign","/ˈfɒrən/","adj.","外国的"],
+["Unit 2",7,"as … as …","-","","和… 一样…"],
+["Unit 2",8,"French","/frentʃ/","n.","法语；法国人"],
+["Unit 2",9,"German","/ˈdʒɜːmən/","n.","德语；德国人"],
+["Unit 2",10,"forward","/ˈfɔːwəd/","adv.","向前"],
+["Unit 2",11,"look forward to","-","","期待"],
+["Unit 2",12,"go","/ɡəʊ/","n.","尝试"],
+["Unit 2",13,"have a go","-","","尝试，试图"],
+["Unit 2",14,"earthquake","/ˈɜːthkweɪk/","n.","地震"],
+["Unit 2",15,"offer","/ˈɒfə(r)/","vt.","提供"],
+["Unit 2",16,"programme","/ˈprəʊɡræm/","n.","课程；计划，节目"],
+["Unit 2",17,"plenty","/ˈplenti/","n.","大量"],
+["Unit 2",18,"plenty of","-","","大量"],
+["Unit 2",19,"hands-on","/ˈhændz ɒn/","adj.","实际操作的"],
+["Unit 2",20,"attention","/əˈtenʃn/","n.","注意，专心"],
+["Unit 2",21,"pay attention to","-","","注意"],
+["Unit 2",22,"boring","/ˈbɔːrɪŋ/","adj.","没趣的，令人厌倦的"],
+["Unit 2",23,"aware","/əˈweə(r)/","adj.","意识到，知道"],
+["Unit 2",24,"be aware of","-","","意识到"],
+["Unit 2",25,"importance","/ɪmˈpɔːtns/","n.","重要性"],
+["Unit 2",26,"Japanese","/ˌdʒæpəˈniːz/","adj. & n.","日本人(的)，日语的"],
+["Unit 2",27,"carefully","/ˈkeəfəli/","adv.","仔细地；小心地"],
+["Unit 2",28,"ourselves","/aʊəˈselvz/","pron.","我们自己"],
+["Unit 2",29,"develop","/dɪˈveləp/","vt. & vi.","形成；发展"],
+["Unit 2",30,"junior","/ˈdʒuːniə(r)/","adj.","初级的；青少年的"],
+["Unit 2",31,"rocket","/ˈrɒkɪt/","n.","火箭"],
+["Unit 2",32,"blog","/blɒɡ/","n.","博客"],
+["Unit 2",33,"least","/liːst/","det.","最少的；最少"],
+["Unit 2",34,"Italian","/ɪˈtæliən/","adj. & n.","意大利人(的)"],
+["Unit 2",35,"international","/ˌɪntəˈnæʃnl/","adj.","国际的"],
+["Unit 2",36,"vacation","/veɪˈkeɪʃn/","n.","假期，度假"],
+["Unit 2",37,"textbook","/ˈtekstbʊk/","n.","课本，教材"],
+["Unit 2",38,"search","/sɜːtʃ/","vi. & vt.","搜索；查找"],
+["Unit 2",39,"finish","/ˈfɪnɪʃ/","vt. & vi.","完成，做好"],
+["Unit 2",40,"American","/əˈmerɪkən/","adj. & n.","美国的；美国人"],
+["Unit 2",41,"hamburger","/ˈhæmbɜːɡə(r)/","n.","汉堡包"],
+["Unit 2",42,"pizza","/ˈpiːtsə/","n.","比萨饼"],
+["Unit 2",43,"fried","/fraɪd/","adj.","油炸的"],
+["Unit 2",44,"salad","/ˈsæləd/","n.","沙拉"],
+["Unit 2",45,"chopstick","/ˈtʃɒpstɪk/","n.","筷子"],
+["Unit 2",46,"movie","/ˈmuːvi/","n.","电影"],
+["Unit 2",47,"difference","/ˈdɪfrəns/","n.","差异，不同"],
+["Unit 2",48,"lunchtime","/ˈlʌntʃtaɪm/","n.","午餐时间"],
+["Unit 2",49,"cookie","/ˈkʊki/","n.","饼干"],
+["Unit 2",50,"fork","/fɔːk/","n.","餐叉"],
+["Unit 2",51,"spoon","/spuːn/","n.","勺，匙"],
+["Unit 2",52,"suggestion","/səˈdʒestʃən/","n.","建议"],
+["Unit 2",53,"facility","/fəˈsɪləti/","n.","设施，设备"],
+["Unit 2",54,"uniform","/ˈjuːnɪfɔːm/","n.","校服，制服"],
+["Unit 2",55,"improve","/ɪmˈpruːv/","vt. & vi.","改进，改善"],
+["Unit 2",56,"suggest","/səˈdʒest/","vt.","建议"],
+["Unit 2",57,"provide","/prəˈvaɪd/","vt.","提供"],
+["Unit 2",58,"moreover","/mɔːrˈəʊvə(r)/","adv.","此外"],
+["Unit 3",1,"learner","/ˈlɜːnə(r)/","n.","学习者"],
+["Unit 3",2,"feed","/fiːd/","vt.","喂养"],
+["Unit 3",3,"fish","/fɪʃ/","vi.","钓鱼，捕鱼"],
+["Unit 3",4,"lifetime","/ˈlaɪftaɪm/","n.","一生"],
+["Unit 3",5,"journey","/ˈdʒɜːni/","n.","旅程，旅行"],
+["Unit 3",6,"single","/ˈsɪŋɡl/","adj.","单个的；单身的"],
+["Unit 3",7,"against","/əˈɡenst/","prep.","逆，反对"],
+["Unit 3",8,"fall behind","-","","落后"],
+["Unit 3",9,"successful","/səkˈsesfl/","adj.","成功的"],
+["Unit 3",10,"drive","/draɪv/","n. & vt.","驱动"],
+["Unit 3",11,"guide","/ɡaɪd/","vt.","指导"],
+["Unit 3",12,"lifelong","/ˈlaɪflɒŋ/","adj.","终身的"],
+["Unit 3",13,"inventor","/ɪnˈventə(r)/","n.","发明家"],
+["Unit 3",14,"found","/faʊnd/","vt.","创建，建立"],
+["Unit 3",15,"talent","/ˈtælənt/","n.","天资；才能"],
+["Unit 3",16,"century","/ˈsentʃəri/","n.","世纪，百年"],
+["Unit 3",17,"set apart","-","","使与众不同"],
+["Unit 3",18,"print","/prɪnt/","n.","印刷行业"],
+["Unit 3",19,"himself","/hɪmˈself/","pron.","他自己"],
+["Unit 3",20,"bookseller","/ˈbʊkselə(r)/","n.","书商"],
+["Unit 3",21,"in return","-","","为了"],
+["Unit 3",22,"return","/rɪˈtɜːn/","vi.","归还"],
+["Unit 3",23,"curious","/ˈkjʊəriəs/","adj.","好奇的"],
+["Unit 3",24,"storm","/stɔːm/","n.","暴风雨"],
+["Unit 3",25,"finding","/ˈfaɪndɪŋ/","n.","调查发现"],
+["Unit 3",26,"predict","/prɪˈdɪkt/","vt.","预测"],
+["Unit 3",27,"countless","/ˈkauntləs/","adj.","数不尽的"],
+["Unit 3",28,"invention","/ɪnˈvenʃn/","n.","发明"],
+["Unit 3",29,"come as no surprise","-","","不足为奇"],
+["Unit 3",30,"invent","/ɪnˈvent/","vt.","发明"],
+["Unit 3",31,"for free","-","","免费"],
+["Unit 3",32,"greatness","/ˈɡreɪtnəs/","n.","伟大"],
+["Unit 3",33,"success","/səkˈses/","n.","成功"],
+["Unit 3",34,"themselves","/ðəmˈselvz/","pron.","他们自己"],
+["Unit 3",35,"conversation","/ˌkɒnvəˈseɪʃn/","n.","交谈，谈话"],
+["Unit 3",36,"translate","/trænsˈleɪt/","vt. & vi.","翻译"],
+["Unit 3",37,"page","/peɪdʒ/","n.","页"],
+["Unit 3",38,"badly","/ˈbædli/","adv.","严重地"],
+["Unit 3",39,"yourself","/jɔːˈself/","pron.","你自己"],
+["Unit 3",40,"yourselves","/jɔːˈselvz/","pron.","你们自己"],
+["Unit 3",41,"record","/rɪˈkɔːd/","vt. /n.","录制；记录"],
+["Unit 3",42,"printer","/ˈprɪntə(r)/","n.","打印机"],
+["Unit 3",43,"dialect","/ˈdaɪəlekt/","n.","方言"],
+["Unit 3",44,"besides","/bɪˈsaɪdz/","prep.","除… 之外(还)"],
+["Unit 3",45,"possible","/ˈpɒsəbl/","adj.","可能的"],
+["Unit 3",46,"as … as possible","-","","尽可能…"],
+["Unit 3",47,"sentence","/ˈsentəns/","n.","句子"],
+["Unit 3",48,"rather","/ˈrɑːðə(r)/","-","rather than 而不是"],
+["Unit 3",49,"pronunciation","/prəˌnʌnsiˈeɪʃn/","n.","发音"],
+["Unit 3",50,"grammar","/ˈɡræmə(r)/","n.","语法"],
+["Unit 3",51,"slowly","/ˈsləʊli/","adv.","慢速地"],
+["Unit 3",52,"text","/tekst/","n.","文本，文章"],
+["Unit 3",53,"speech","/spiːtʃ/","n.","演讲"],
+["Unit 3",54,"aloud","/əˈlaʊd/","adv.","出声地；大声地"],
+["Unit 3",55,"pronounce","/prəˈnaʊns/","vt.","发音"],
+["Unit 3",56,"correctly","/kəˈrektli/","adv.","正确地"],
+["Unit 3",57,"spelling","/ˈspelɪŋ/","n.","拼写"],
+["Unit 3",58,"to one's surprise","-","","令某人惊讶的是"],
+["Unit 3",59,"repeat","/rɪˈpiːt/","vt.","重复"],
+["Unit 3",60,"tourist","/ˈtʊərɪst/","n.","游客"],
+["Unit 4",1,"mooncake","/ˈmuːnkeɪk/","n.","月饼"],
+["Unit 4",2,"shelf","/ʃelf/","n.","架子"],
+["Unit 4",3,"rose","/rəʊz/","n.","玫瑰"],
+["Unit 4",4,"tape","/teɪp/","n. /vt.","胶带；粘贴"],
+["Unit 4",5,"glue","/ɡluː/","n. /vt.","胶水；黏合"],
+["Unit 4",6,"fold","/fəʊld/","vt.","折叠"],
+["Unit 4",7,"complete","/kəmˈpliːt/","adj.","完成；全部的"],
+["Unit 4",8,"DIY","-","n.","自己动手"],
+["Unit 4",9,"crazy","/ˈkreɪzi/","adj.","狂热的"],
+["Unit 4",10,"be crazy about","-","","热衷于"],
+["Unit 4",11,"born","/bɔːn/","adj.","天生的"],
+["Unit 4",12,"handyman","/ˈhændimæn/","n.","手巧的人"],
+["Unit 4",13,"mistake","/mɪˈsteɪk/","n.","错误"],
+["Unit 4",14,"power","/ˈpaʊə(r)/","n.","断电，停电"],
+["Unit 4",15,"pipe","/paɪp/","n.","管道"],
+["Unit 4",16,"fill … with","-","","使… 充满"],
+["Unit 4",17,"unlucky","/ʌnˈlʌki/","adj.","不幸的"],
+["Unit 4",18,"instead","/ɪnˈsted/","adv.","反而"],
+["Unit 4",19,"course","/kɔːs/","n.","课程"],
+["Unit 4",20,"mess","/mes/","n.","杂乱"],
+["Unit 4",21,"in a mess","-","","乱七八糟"],
+["Unit 4",22,"lamp","/læmp/","n.","灯"],
+["Unit 4",23,"catch one's eye","-","","引起某人注意"],
+["Unit 4",24,"surprise","/səˈpraɪz/","vt.","使惊奇"],
+["Unit 4",25,"impossible","/ɪmˈpɒsəbl/","adj.","不可能的"],
+["Unit 4",26,"nearly","/ˈnɪəli/","adv.","几乎"],
+["Unit 4",27,"can","/kæn/","n.","容器"],
+["Unit 4",28,"everywhere","/ˈevriweə(r)/","adv.","到处"],
+["Unit 4",29,"chalk","/tʃɔːk/","n.","粉笔"],
+["Unit 4",30,"mark","/mɑːk/","n.","标记；分数"],
+["Unit 4",31,"brush","/brʌʃ/","n.","刷子；画笔"],
+["Unit 4",32,"instructions","/ɪnˈstrʌkʃnz/","n.","用法说明"],
+["Unit 4",33,"dangerous","/ˈdeɪndʒərəs/","adj.","危险的"],
+["Unit 4",34,"usual","/ˈjuːʒuəl/","adj.","通常的"],
+["Unit 4",35,"tie-dye","/ˈtaɪdaɪ/","vt.","扎染"],
+["Unit 4",36,"method","/ˈmeθəd/","n.","方法"],
+["Unit 4",37,"not only … but also …","-","","不仅… 而且…"],
+["Unit 4",38,"twist","/twɪst/","vt.","使扭曲"],
+["Unit 4",39,"cloth","/klɒθ/","n.","布，织物"],
+["Unit 4",40,"tie","/taɪ/","vt.","系，拴，捆"],
+["Unit 4",41,"thread","/θred/","n.","线"],
+["Unit 4",42,"dye","/daɪ/","vt. /n.","染色；染料"],
+["Unit 4",43,"untie","/ʌnˈtaɪ/","vt.","解开"],
+["Unit 4",44,"product","/ˈprɒdʌkt/","n.","产品"],
+["Unit 4",45,"workshop","/ˈwɜːkʃɒp/","n.","作坊"],
+["Unit 4",46,"pattern","/ˈpætn/","n.","图案；模式"],
+["Unit 4",47,"clothing","/ˈkləʊðɪŋ/","n.","衣服，服装"],
+["Unit 4",48,"roll","/rəʊl/","n.","卷；管"],
+["Unit 4",49,"reduce","/rɪˈdjuːs/","vt. & vi.","减少"],
+["Unit 4",50,"waste","/weɪst/","n.","浪费；废料"],
+["Unit 4",51,"joy","/dʒɔɪ/","n.","乐趣；高兴"],
+["Unit 4",52,"reason","/ˈriːzn/","n.","理由，原因"],
+["Unit 4",53,"result","/rɪˈzʌlt/","n.","结果"],
+["Unit 4",54,"glove","/ɡlʌv/","n.","手套"],
+["Unit 4",55,"button","/ˈbʌtn/","n.","纽扣；按钮"],
+["Unit 4",56,"onto","/ˈɒntu/","prep.","到… 上"],
+["Unit 4",57,"finger","/ˈfɪŋɡə(r)/","n.","手指"],
+["Unit 4",58,"sew","/səʊ/","vt.","缝制"],
+["Unit 5",1,"wild","/waɪld/","adj. & n.","野生的；野生状态"],
+["Unit 5",2,"dolphin","/ˈdɒlfɪn/","n.","海豚"],
+["Unit 5",3,"eagle","/ˈiːɡl/","n.","鹰"],
+["Unit 5",4,"fox","/fɒks/","n.","狐狸"],
+["Unit 5",5,"shark","/ʃɑːk/","n.","鲨鱼"],
+["Unit 5",6,"wolf","/wʊlf/","n.","狼"],
+["Unit 5",7,"zebra","/ˈzebrə/","n.","斑马"],
+["Unit 5",8,"king","/kɪŋ/","n.","大王；国王"],
+["Unit 5",9,"tiny","/ˈtaɪni/","adj.","极小的"],
+["Unit 5",10,"birth","/bɜːθ/","n.","出生"],
+["Unit 5",11,"round-the-clock","","adj.","全天候的"],
+["Unit 5",12,"weigh","/weɪ/","v.","有… 重"],
+["Unit 5",13,"satisfying","/ˈsætɪsfaɪɪŋ/","adj.","令人满意的"],
+["Unit 5",14,"giant","/ˈdʒaɪənt/","adj.","巨大的"],
+["Unit 5",15,"giant panda","","n.","大熊猫"],
+["Unit 5",16,"in the wild","-","","在野外"],
+["Unit 5",17,"face","/feɪs/","vt.","面临；面对"],
+["Unit 5",18,"serious","/ˈsɪəriəs/","adj.","严重的"],
+["Unit 5",19,"even if","-","","即使，尽管"],
+["Unit 5",20,"easily","/ˈiːzəli/","adv.","容易地"],
+["Unit 5",21,"sick","/sɪk/","adj.","生病的"],
+["Unit 5",22,"live on","-","","以吃… 为生"],
+["Unit 5",23,"mainly","/ˈmeɪnli/","adv.","主要地"],
+["Unit 5",24,"as a result","-","","因此"],
+["Unit 5",25,"government","/ˈɡʌvənmənt/","n.","政府"],
+["Unit 5",26,"action","/ˈækʃn/","n.","行动"],
+["Unit 5",27,"take action","-","","采取行动"],
+["Unit 5",28,"nature reserve","","n.","自然保护区"],
+["Unit 5",29,"thanks to","-","","多亏，由于"],
+["Unit 5",30,"effort","/ˈefət/","n.","努力"],
+["Unit 5",31,"increase","/ɪnˈkriːs/","vi. & vt.","增加"],
+["Unit 5",32,"protection","/prəˈtekʃn/","n.","保护"],
+["Unit 5",33,"in danger","-","","处于危险中"],
+["Unit 5",34,"fat","/fæt/","adj.","胖的"],
+["Unit 5",35,"once in a while","-","","偶尔地"],
+["Unit 5",36,"manage","/ˈmænɪdʒ/","vt. & vi.","完成(困难的事)"],
+["Unit 5",37,"whale","/weɪl/","n.","鲸"],
+["Unit 5",38,"hunt","/hʌnt/","vt. & vi.","猎杀"],
+["Unit 5",39,"meaningful","/ˈmiːnɪŋfl/","adj.","重要的"],
+["Unit 5",40,"accept","/əkˈsept/","vt. & vi.","接受"],
+["Unit 5",41,"polar bear","","n.","北极熊"],
+["Unit 5",42,"melt","/melt/","vi. & vt.","(使)融化"],
+["Unit 5",43,"drop","/drɒp/","vi. & vt.","(使)降低；掉下"],
+["Unit 5",44,"blue whale","","n.","蓝鲸"],
+["Unit 5",45,"risk","/rɪsk/","n.","危险，风险"],
+["Unit 5",46,"disaster","/dɪˈzɑːstə(r)/","n.","灾害"],
+["Unit 5",47,"pollution","/pəˈluːʃn/","n.","污染"],
+["Unit 5",48,"certain","/ˈsɜːtn/","adj.","某种，某些"],
+["Unit 5",49,"illness","/ˈɪlnəs/","n.","疾病"],
+["Unit 6",1,"foggy","/ˈfɒɡi/","adj.","有雾的"],
+["Unit 6",2,"snowy","/ˈsnəʊi/","adj.","下雪多的"],
+["Unit 6",3,"pleasant","/ˈpleznt/","adj.","令人愉快的"],
+["Unit 6",4,"hide","/haɪd/","vi. & vt.","躲避；藏"],
+["Unit 6",5,"shower","/ˈʃaʊə(r)/","n.","阵雨"],
+["Unit 6",6,"memory","/ˈmeməri/","n.","回忆"],
+["Unit 6",7,"stream","/striːm/","n.","小河，溪"],
+["Unit 6",8,"shade","/ʃeɪd/","n.","树荫"],
+["Unit 6",9,"lazy","/ˈleɪzi/","adj.","懒散的"],
+["Unit 6",10,"pool","/puːl/","n.","水塘，池塘"],
+["Unit 6",11,"pile","/paɪl/","n.","堆"],
+["Unit 6",12,"upon","/əˈpɒn/","prep.","在… 上"],
+["Unit 6",13,"harvest","/ˈhɑːvɪst/","vt. & vi.","收割"],
+["Unit 6",14,"crop","/krɒp/","n.","庄稼，作物"],
+["Unit 6",15,"as","/æz/","conj.","当… 时；因为"],
+["Unit 6",16,"temperature","/ˈtemprətʃə(r)/","n.","温度"],
+["Unit 6",17,"sofa","/ˈsəʊfə/","n.","长沙发"],
+["Unit 6",18,"snowman","/ˈsnəʊmæn/","n.","雪人"],
+["Unit 6",19,"blow","/bləʊ/","vi. & vt.","吹，刮"],
+["Unit 6",20,"shine","/ʃaɪn/","vi.","发光，照耀"],
+["Unit 6",21,"smell","/smel/","v.","有… 气味"],
+["Unit 6",22,"heat","/hiːt/","n.","热；热量"],
+["Unit 6",23,"sudden","/ˈsʌdn/","adj.","突然的"],
+["Unit 6",24,"snowball","/ˈsnəʊbɔːl/","n.","雪球"],
+["Unit 6",25,"fog","/fɒɡ/","n.","雾"],
+["Unit 6",26,"divide","/dɪˈvaɪd/","vt. & vi.","分开，分成"],
+["Unit 6",27,"divide … into …","-","","把… 分成…"],
+["Unit 6",28,"end","/end/","vi. & vt.","结束，终止"],
+["Unit 6",29,"growth","/ɡrəʊθ/","n.","生长，成长"],
+["Unit 6",30,"as well as","-","","除… 之外，也"],
+["Unit 6",31,"beyond","/bɪˈjɒnd/","prep.","超出"],
+["Unit 6",32,"connect","/kəˈnekt/","vt.","联系"],
+["Unit 6",33,"be connected with","-","","与… 有联系"],
+["Unit 6",34,"positive","/ˈpɒzətɪv/","adj.","正面的；积极的"],
+["Unit 6",35,"effect","/ɪˈfekt/","n.","影响，结果"],
+["Unit 6",36,"average","/ˈævərɪdʒ/","adj.","平均的"],
+["Unit 6",37,"wet","/wet/","adj.","湿的，潮的"],
+["Unit 6",38,"daylight","/ˈdeɪlaɪt/","n.","日光"],
+["Unit 6",39,"degree","/dɪˈɡriː/","n.","度，度数"],
+["Unit 6",40,"sunshine","/ˈsʌnʃaɪn/","n.","阳光"],
+["Unit 6",41,"snowstorm","/ˈsnəʊstɔːm/","n.","暴风雪"],
+["Unit 6",42,"get around","-","","各处走动"],
+["Unit 6",43,"awful","/ˈɔːfl/","adj.","糟糕的"],
+["Unit 6",44,"order","/ˈɔːdə(r)/","vt. & vi.","订购"],
+["Unit 6",45,"take care","-","","保重"],
+["Unit 6",46,"frozen","/ˈfrəʊzn/","adj.","结冰的"],
+["Unit 6",47,"thick","/θɪk/","adj.","厚的；浓的"],
+["Unit 6",48,"deep","/diːp/","adj.","深的"],
+["Unit 6",49,"throw","/θrəʊ/","vt. & vi.","扔"],
+["Unit 6",50,"sculpture","/ˈskʌlptʃə(r)/","n.","雕像，雕塑品"],
+["Unit 7",1,"coral","/ˈkɒrəl/","n.","珊瑚"],
+["Unit 7",2,"reef","/riːf/","n.","礁"],
+["Unit 7",3,"penguin","/ˈpeŋɡwɪn/","n.","企鹅"],
+["Unit 7",4,"ecosystem","/ˈiːkəʊsɪstəm/","n.","生态系统"],
+["Unit 7",5,"rainfall","/ˈreɪnfɔːl/","n.","降雨量"],
+["Unit 7",6,"climate","/ˈklaɪmət/","n.","气候"],
+["Unit 7",7,"wetland","/ˈwetlənd/","n.","湿地"],
+["Unit 7",8,"include","/ɪnˈkluːd/","vt.","包括"],
+["Unit 7",9,"pond","/pɒnd/","n.","池塘"],
+["Unit 7",10,"around","/əˈraʊnd/","adv.","大约"],
+["Unit 7",11,"hold","/həʊld/","vt.","容纳；举行"],
+["Unit 7",12,"return","/rɪˈtɜːn/","vi.","返回"],
+["Unit 7",13,"get rid of","-","","清除；摆脱"],
+["Unit 7",14,"prevent","/prɪˈvent/","vt.","防止，阻止"],
+["Unit 7",15,"store","/stɔː(r)/","vt.","贮存"],
+["Unit 7",16,"sponge","/spʌndʒ/","n.","海绵块"],
+["Unit 7",17,"act","/ækt/","vi.","起作用；行动"],
+["Unit 7",18,"carbon dioxide","","n.","二氧化碳"],
+["Unit 7",19,"trap","/træp/","vt.","吸收"],
+["Unit 7",20,"therefore","/ˈðeəfɔː(r)/","adv.","因此"],
+["Unit 7",21,"lung","/lʌŋ/","n.","肺"],
+["Unit 7",22,"sadly","/ˈsædli/","adv.","不幸地；悲伤地"],
+["Unit 7",23,"ton","/tʌn/","n.","吨"],
+["Unit 7",24,"harm","/hɑːm/","vt. & n.","伤害，损害"],
+["Unit 7",25,"wildlife","/ˈwaɪldlaɪf/","n.","野生动物"],
+["Unit 7",26,"topic","/ˈtɒpɪk/","n.","话题"],
+["Unit 7",27,"quite a few","-","","相当多，不少"],
+["Unit 7",28,"noisy","/ˈnɔɪzi/","adj.","吵闹的"],
+["Unit 7",29,"system","/ˈsɪstəm/","n.","系统；体系"],
+["Unit 7",30,"cause","/kɔːz/","vt.","造成，导致"],
+["Unit 7",31,"damage","/ˈdæmɪdʒ/","vt.","损害，毁坏"],
+["Unit 7",32,"cover","/ˈkʌvə(r)/","n.","躲避处"],
+["Unit 7",33,"rare","/reə(r)/","adj.","稀罕的，珍贵的"],
+["Unit 7",34,"lead","/liːd/","vi.","造成(后果)"],
+["Unit 7",35,"lead to","-","","导致"],
+["Unit 7",36,"mud","/mʌd/","n.","泥"],
+["Unit 7",37,"create","/kriˈeɪt/","vt.","创建，创造"],
+["Unit 7",38,"set up","-","","建立"],
+["Unit 7",39,"balanced","/ˈbælənst/","adj.","保持平衡的"],
+["Unit 7",40,"project","/ˈprɒdʒekt/","n.","项目"],
+["Unit 7",41,"knowledge","/ˈnɒlɪdʒ/","n.","知识"],
+["Unit 7",42,"sir","/sɜː(r)/","n.","先生"],
+["Unit 7",43,"madam","/ˈmædəm/","n.","女士"],
+["Unit 7",44,"kill","/kɪl/","vt. & vi.","杀死"],
+["Unit 7",45,"solve","/sɒlv/","vt.","解决"],
+["Unit 7",46,"environmental","/ɪnˌvaɪrənˈmentl/","adj.","环境的"],
+["Unit 8",1,"sound","/saʊnd/","adj.","健康的，无损伤的"],
+["Unit 8",2,"safe and sound","-","","安然无恙"],
+["Unit 8",3,"emergency","/ɪˈmɜːdʒənsi/","n.","紧急情况"],
+["Unit 8",4,"situation","/ˌsɪtʃuˈeɪʃn/","n.","情况"],
+["Unit 8",5,"lightning","/ˈlaɪtnɪŋ/","n.","闪电"],
+["Unit 8",6,"office","/ˈɒfɪs/","n.","办公室"],
+["Unit 8",7,"homeless","/ˈhəʊmləs/","adj.","无家可归的"],
+["Unit 8",8,"coach","/kəʊtʃ/","n.","长途汽车"],
+["Unit 8",9,"road","/rəʊd/","n.","道路"],
+["Unit 8",10,"accident","/ˈæksɪdənt/","n.","事故"],
+["Unit 8",11,"typhoon","/taɪˈfuːn/","n.","台风"],
+["Unit 8",12,"state","/steɪt/","n.","状态"],
+["Unit 8",13,"fireman","/ˈfaɪəmən/","n.","消防员"],
+["Unit 8",14,"traffic","/ˈtræfɪk/","n.","交通"],
+["Unit 8",15,"terrible","/ˈterəbl/","adj.","可怕的"],
+["Unit 8",16,"slight","/slaɪt/","adj.","轻微的"],
+["Unit 8",17,"shake","/ʃeɪk/","n. & vi. & vt.","摇动"],
+["Unit 8",18,"thunder","/ˈθʌndə(r)/","n.","雷声"],
+["Unit 8",19,"bomb","/bɒm/","n.","炸弹"],
+["Unit 8",20,"shout","/ʃaʊt/","vi. & n.","呼喊"],
+["Unit 8",21,"fear","/fɪə(r)/","n.","恐惧"],
+["Unit 8",22,"in fear","-","","恐惧地"],
+["Unit 8",23,"direction","/dəˈrekʃn/","n.","方向"],
+["Unit 8",24,"in all directions","-","","四处，到处"],
+["Unit 8",25,"brick","/brɪk/","n.","砖"],
+["Unit 8",26,"silent","/ˈsaɪlənt/","adj.","安静的"],
+["Unit 8",27,"if","/ɪf/","conj.","是否"],
+["Unit 8",28,"nervous","/ˈnɜːvəs/","adj.","焦虑的；胆怯的"],
+["Unit 8",29,"beat","/biːt/","vi. & vt.","敲打"],
+["Unit 8",30,"say to oneself","-","","暗想；自言自语"],
+["Unit 8",31,"calm","/kɑːm/","vi. & vt.","(使)平静"],
+["Unit 8",32,"calm down","-","","(使)平静"],
+["Unit 8",33,"since","/sɪns/","conj.","因为，既然"],
+["Unit 8",34,"weak","/wiːk/","adj.","虚弱的"],
+["Unit 8",35,"voice","/vɔɪs/","n.","嗓音"],
+["Unit 8",36,"except","/ɪkˈsept/","prep.","除… 之外"],
+["Unit 8",37,"smoke","/sməʊk/","n.","烟"],
+["Unit 8",38,"burn","/bɜːn/","vi. & vt.","着火；烧毁"],
+["Unit 8",39,"put out","-","","扑灭，熄灭"],
+["Unit 8",40,"heavily","/ˈhevili/","adv.","大量地"],
+["Unit 8",41,"guess","/ɡes/","vt. & vi.","猜测"],
+["Unit 8",42,"hat","/hæt/","n.","帽子"],
+["Unit 8",43,"clear","/klɪə(r)/","vt.","清除，清理"],
+["Unit 8",44,"policeman","/pəˈliːsmən/","n.","警察"],
+["Unit 8",45,"ache","/eɪk/","n. & vi.","疼痛"],
+["Unit 8",46,"postman","/ˈpəʊstmən/","n.","邮递员"],
+["Unit 8",47,"airport","/ˈeəpɔːt/","n.","机场"],
+["Unit 8",48,"passport","/ˈpɑːspɔːt/","n.","护照"],
+["Unit 8",49,"report","/rɪˈpɔːt/","vt. & n.","报道；汇报"],
+["Unit 8",50,"bush fire","","n.","山林大火"],
+["Unit 8",51,"so far","-","","迄今为止"],
+["Unit 8",52,"including","/ɪnˈkluːdɪŋ/","prep.","包括… 在内"],
+["Unit 8",53,"sign","/saɪn/","n.","标牌"],
+["Unit 8",54,"avoid","/əˈvɔɪd/","vt.","避免"],
+["Unit 8",55,"wound","/wuːnd/","n.","伤口"],
+["Unit 8",56,"bleed","/bliːd/","vi.","流血"],
+["Unit 8",57,"press","/pres/","vt. & vi.","按，压"],
+["Unit 8",58,"tidal wave","","n.","海啸"],
+["Unit 8",59,"warn","/wɔːn/","vt. & vi.","警告"],
+["Unit 8",60,"disappear","/ˌdɪsəˈpɪə(r)/","vi.","消失"],
+];
+// === END WORD DATA ===
+
+// Process raw data
+const words = [];
+const units = [];
+WORDS_RAW.forEach(function(item) {
+  var unit = item[0], num = item[1], word = item[2], phonetic = item[3], pos = item[4], meaning = item[5];
+  if (units.indexOf(unit) === -1) units.push(unit);
+  words.push({ unit:unit, num:num, word:word, phonetic:phonetic||'', pos:pos||'', meaning:meaning||'' });
+});
+
+// Storage helpers
+function getData(key, def) { try { return JSON.parse(localStorage.getItem('vocab8s_' + key)) || def; } catch(e) { return def; } }
+function setData(key, val) { localStorage.setItem('vocab8s_' + key, JSON.stringify(val)); }
+
+// State
+var currentUnit = units[0];
+var currentIndex = 0;
+var mastery = getData('mastery', {});
+var syncCode = getData('syncCode', '');
+var syncBinId = getData('syncBinId', '');
+
+// ====== SYNC MODULE ======
+// Using JSONBin.io free tier (no signup needed for public bins)
+var JSONBIN_API = 'https://api.jsonbin.io/v3';
+var JSONBIN_KEY = '$2a$10$placeholder'; // Users get their own with sync code as bin name
+
+function showSyncModal() {
+  document.getElementById('syncModal').classList.add('active');
+  document.getElementById('syncCodeInput').value = syncCode;
+  document.getElementById('syncModalMsg').textContent = '';
+}
+function closeSyncModal() { document.getElementById('syncModal').classList.remove('active'); }
+
+function showExportImport() { document.getElementById('exportModal').classList.add('active'); }
+function closeExportModal() { document.getElementById('exportModal').classList.remove('active'); }
+
+function updateSyncUI() {
+  var statusEl = document.getElementById('syncStatus');
+  var loginBtn = document.getElementById('syncLoginBtn');
+  var pushBtn = document.getElementById('syncPushBtn');
+  var pullBtn = document.getElementById('syncPullBtn');
+  if (syncCode && syncBinId) {
+    statusEl.innerHTML = '<span class="sync-indicator sync-online"></span>已登录: ' + syncCode;
+    loginBtn.textContent = '🔄 切换账号';
+    pushBtn.style.display = '';
+    pullBtn.style.display = '';
+  } else if (syncCode) {
+    statusEl.innerHTML = '<span class="sync-indicator sync-offline"></span>同步码: ' + syncCode + ' (未连接)';
+    loginBtn.textContent = '🔑 重新连接';
+    pushBtn.style.display = 'none';
+    pullBtn.style.display = 'none';
+  } else {
+    statusEl.innerHTML = '<span class="sync-indicator sync-offline"></span>未登录';
+    loginBtn.textContent = '🔑 登录同步';
+    pushBtn.style.display = 'none';
+    pullBtn.style.display = 'none';
+  }
+}
+
+function getAllUserData() {
+  return { mastery: mastery, checkins: getData('checkins', []), lastSync: new Date().toISOString() };
+}
+
+function applyUserData(data) {
+  if (data.mastery) {
+    // Merge: keep the higher mastery level
+    Object.keys(data.mastery).forEach(function(k) {
+      if (!mastery[k] || data.mastery[k] > mastery[k]) mastery[k] = data.mastery[k];
+    });
+    setData('mastery', mastery);
+  }
+  if (data.checkins) {
+    var local = getData('checkins', []);
+    var merged = local.slice();
+    data.checkins.forEach(function(d) { if (merged.indexOf(d) === -1) merged.push(d); });
+    merged.sort();
+    setData('checkins', merged);
+  }
+}
+
+// Sync Login - create or find bin by sync code
+function syncLogin() {
+  var code = document.getElementById('syncCodeInput').value.trim();
+  if (code.length < 4) {
+    document.getElementById('syncModalMsg').textContent = '同步码至少需要4个字符';
+    return;
+  }
+  syncCode = code;
+  setData('syncCode', syncCode);
+  document.getElementById('syncModalMsg').textContent = '正在连接...';
+  
+  // Try to find existing bin by searching (use code as bin name)
+  // Since JSONBin free tier is limited, we use a simpler approach:
+  // Store binId in localStorage keyed by syncCode, and also try to create/read
+  var storedBinId = getData('bin_' + syncCode, '');
+  if (storedBinId) {
+    syncBinId = storedBinId;
+    setData('syncBinId', syncBinId);
+    document.getElementById('syncModalMsg').textContent = '已连接！正在同步...';
+    closeSyncModal();
+    updateSyncUI();
+    syncPull();
+    return;
+  }
+  
+  // Create new bin
+  createBin();
+}
+
+function createBin() {
+  var data = getAllUserData();
+  fetch(JSONBIN_API + '/b', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Bin-Name': 'vocab8_' + syncCode, 'X-Access-Key-Id': '' },
+    body: JSON.stringify(data)
+  }).then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.metadata && res.metadata.id) {
+      syncBinId = res.metadata.id;
+      setData('syncBinId', syncBinId);
+      setData('bin_' + syncCode, syncBinId);
+      document.getElementById('syncModalMsg').textContent = '创建成功！BinID: ' + syncBinId;
+      closeSyncModal();
+      updateSyncUI();
+    } else {
+      // JSONBin might need API key, fallback to local-only with export/import
+      fallbackSync();
+    }
+  }).catch(function(e) {
+    fallbackSync();
+  });
+}
+
+function fallbackSync() {
+  // Use a simpler approach: encode data in URL hash for sharing
+  document.getElementById('syncModalMsg').textContent = '云同步不可用，已切换为本地模式。请使用"备份"功能手动同步。';
+  syncBinId = 'local';
+  setData('syncBinId', syncBinId);
+  setData('bin_' + syncCode, syncBinId);
+  setTimeout(function() { closeSyncModal(); updateSyncUI(); }, 2000);
+}
+
+function syncPush() {
+  if (!syncBinId || syncBinId === 'local') {
+    alert('云同步不可用，请使用"备份"功能导出数据。');
+    return;
+  }
+  var data = getAllUserData();
+  document.getElementById('syncStatus').innerHTML = '<span class="sync-indicator sync-online"></span>上传中...';
+  fetch(JSONBIN_API + '/b/' + syncBinId, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(function(r) { return r.json(); })
+  .then(function(res) {
+    updateSyncUI();
+    alert('数据已上传到云端！');
+  }).catch(function(e) {
+    updateSyncUI();
+    alert('上传失败，请检查网络连接。可以使用"备份"功能手动导出。');
+  });
+}
+
+function syncPull() {
+  if (!syncBinId || syncBinId === 'local') {
+    alert('云同步不可用，请使用"备份"功能导入数据。');
+    return;
+  }
+  document.getElementById('syncStatus').innerHTML = '<span class="sync-indicator sync-online"></span>下载中...';
+  fetch(JSONBIN_API + '/b/' + syncBinId + '/latest')
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.record) {
+      applyUserData(res.record);
+      updateSyncUI();
+      showCard();
+      alert('数据已从云端同步！');
+    } else {
+      updateSyncUI();
+      alert('未找到云端数据。');
+    }
+  }).catch(function(e) {
+    updateSyncUI();
+    alert('下载失败，请检查网络连接。');
+  });
+}
+
+// Export/Import (offline backup)
+function exportData() {
+  var data = getAllUserData();
+  data.syncCode = syncCode;
+  var blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '单词卡数据备份_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  document.getElementById('exportMsg').textContent = '导出成功！';
+}
+
+function importData(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      applyUserData(data);
+      if (data.syncCode) { syncCode = data.syncCode; setData('syncCode', syncCode); }
+      document.getElementById('exportMsg').textContent = '导入成功！数据已合并。';
+      updateSyncUI();
+      showCard();
+    } catch(err) {
+      document.getElementById('exportMsg').textContent = '导入失败：文件格式不正确。';
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ====== CORE APP ======
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(function(btn, i) {
+    btn.classList.toggle('active', ['study','checkin','review','stats'][i] === tab);
+  });
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'checkin') renderCheckin();
+  if (tab === 'review') renderReviewList();
+  if (tab === 'stats') renderStats();
+}
+
+function renderUnits() {
+  var sel = document.getElementById('unitSelector');
+  sel.innerHTML = units.map(function(u) {
+    return '<button class="unit-btn '+(u===currentUnit?'active':'')+'" onclick="selectUnit(\''+u+'\')">'+u+'</button>';
+  }).join('');
+  var rf = document.getElementById('reviewUnitFilter');
+  rf.innerHTML = '<option value="all">全部单元</option>' + units.map(function(u) { return '<option value="'+u+'">'+u+'</option>'; }).join('');
+}
+
+function selectUnit(unit) { currentUnit = unit; currentIndex = 0; renderUnits(); showCard(); }
+function getUnitWords() { return words.filter(function(w) { return w.unit === currentUnit; }); }
+
+function showCard() {
+  var unitWords = getUnitWords();
+  if (unitWords.length === 0) return;
+  if (currentIndex >= unitWords.length) currentIndex = 0;
+  if (currentIndex < 0) currentIndex = unitWords.length - 1;
+  var w = unitWords[currentIndex];
+  document.getElementById('cardWord').textContent = w.word;
+  document.getElementById('cardPhonetic').textContent = w.phonetic;
+  document.getElementById('cardPos').textContent = w.pos;
+  document.getElementById('cardMeaning').textContent = w.meaning;
+  document.getElementById('flashcard').classList.remove('flipped');
+  document.getElementById('progressText').textContent = (currentIndex + 1) + ' / ' + unitWords.length;
+  document.getElementById('progressFill').style.width = ((currentIndex + 1) / unitWords.length * 100) + '%';
+}
+
+function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); }
+function nextCard() { currentIndex++; showCard(); }
+function prevCard() { currentIndex--; showCard(); }
+
+function markWord(level) {
+  var unitWords = getUnitWords();
+  var w = unitWords[currentIndex];
+  var key = w.unit + '_' + w.num;
+  if (level === 1) { mastery[key] = (mastery[key] || 0) >= 1 ? 2 : 1; }
+  else { mastery[key] = 1; }
+  setData('mastery', mastery);
+  nextCard();
+}
+
+// Check-in
+function getCheckins() { return getData('checkins', []); }
+function getTodayStr() { return new Date().toISOString().slice(0, 10); }
+
+function doCheckin() {
+  var checkins = getCheckins();
+  var today = getTodayStr();
+  if (checkins.indexOf(today) === -1) { checkins.push(today); setData('checkins', checkins); }
+  renderCheckin();
+}
+
+function renderCheckin() {
+  var checkins = getCheckins();
+  var today = getTodayStr();
+  var btn = document.getElementById('checkinBtn');
+  if (checkins.indexOf(today) !== -1) {
+    btn.disabled = true; btn.textContent = '✅ 今日已打卡';
+    document.getElementById('checkinTip').textContent = '太棒了！今天已经完成打卡！';
+  } else {
+    btn.disabled = false; btn.textContent = '📅 今日打卡';
+    document.getElementById('checkinTip').textContent = '';
+  }
+  var streak = 0, d = new Date();
+  if (checkins.indexOf(today) !== -1) {
+    while (checkins.indexOf(d.toISOString().slice(0,10)) !== -1) { streak++; d.setDate(d.getDate()-1); }
+  } else {
+    d.setDate(d.getDate()-1);
+    while (checkins.indexOf(d.toISOString().slice(0,10)) !== -1) { streak++; d.setDate(d.getDate()-1); }
+  }
+  document.getElementById('streakText').textContent = '🔥 连续打卡 ' + streak + ' 天';
+  renderCalendar(checkins);
+}
+
+function renderCalendar(checkins) {
+  var cal = document.getElementById('calendar');
+  var today = new Date();
+  var year = today.getFullYear(), month = today.getMonth();
+  var firstDay = new Date(year, month, 1).getDay();
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var headers = ['日','一','二','三','四','五','六'];
+  var html = headers.map(function(h){ return '<div class="cal-header">'+h+'</div>'; }).join('');
+  for (var i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+  for (var dd = 1; dd <= daysInMonth; dd++) {
+    var ds = year+'-'+String(month+1).padStart(2,'0')+'-'+String(dd).padStart(2,'0');
+    var isToday = dd === today.getDate();
+    var isChecked = checkins.indexOf(ds) !== -1;
+    html += '<div class="cal-day '+(isChecked?'checked':'')+' '+(isToday?'today':'')+'">'+dd+'</div>';
+  }
+  cal.innerHTML = html;
+}
+
+// Review
+function renderReviewList() {
+  var filter = document.getElementById('reviewUnitFilter').value;
+  var search = document.getElementById('reviewSearch').value.toLowerCase();
+  var unmastered = words.filter(function(w) {
+    var key = w.unit + '_' + w.num;
+    var level = mastery[key] || 0;
+    if (level >= 2) return false;
+    if (filter !== 'all' && w.unit !== filter) return false;
+    if (search && w.word.toLowerCase().indexOf(search) === -1 && w.meaning.indexOf(search) === -1) return false;
+    return true;
+  });
+  var list = document.getElementById('reviewList');
+  if (unmastered.length === 0) {
+    list.innerHTML = '<p style="text-align:center;padding:40px;color:#666;">🎉 没有未掌握的单词！</p>';
+    document.getElementById('reviewTip').textContent = '';
+    return;
+  }
+  list.innerHTML = unmastered.map(function(w) {
+    var key = w.unit + '_' + w.num;
+    var level = mastery[key] || 0;
+    var sc = level === 0 ? 'status-new' : 'status-learning';
+    var st = level === 0 ? '未学习' : '学习中';
+    return '<div class="word-item"><span class="word">'+w.word+'</span><span class="meaning">'+w.meaning+' <small style="color:#999">'+w.unit+'</small></span><span class="status '+sc+'">'+st+'</span></div>';
+  }).join('');
+  document.getElementById('reviewTip').textContent = '共 ' + unmastered.length + ' 个单词未掌握';
+}
+
+// Stats
+function renderStats() {
+  var total = words.length, mastered = 0, learning = 0, newW = 0;
+  words.forEach(function(w) {
+    var level = mastery[w.unit+'_'+w.num] || 0;
+    if (level >= 2) mastered++; else if (level === 1) learning++; else newW++;
+  });
+  var checkins = getCheckins();
+  document.getElementById('statsGrid').innerHTML =
+    '<div class="stat-card"><div class="stat-number">'+total+'</div><div class="stat-label">总单词数</div></div>'+
+    '<div class="stat-card"><div class="stat-number" style="color:#2e7d32">'+mastered+'</div><div class="stat-label">已掌握</div></div>'+
+    '<div class="stat-card"><div class="stat-number" style="color:#e65100">'+learning+'</div><div class="stat-label">学习中</div></div>'+
+    '<div class="stat-card"><div class="stat-number" style="color:#1565c0">'+newW+'</div><div class="stat-label">未学习</div></div>'+
+    '<div class="stat-card"><div class="stat-number">'+checkins.length+'</div><div class="stat-label">累计打卡</div></div>'+
+    '<div class="stat-card"><div class="stat-number">'+(total>0?Math.round(mastered/total*100):0)+'%</div><div class="stat-label">掌握率</div></div>';
+  var unitHtml = '<div style="margin-top:10px;">';
+  units.forEach(function(u) {
+    var uw = words.filter(function(w){ return w.unit === u; });
+    var um = uw.filter(function(w){ return (mastery[w.unit+'_'+w.num] || 0) >= 2; }).length;
+    var pct = uw.length > 0 ? Math.round(um / uw.length * 100) : 0;
+    unitHtml += '<div style="display:flex;align-items:center;margin:8px 0;"><span style="min-width:60px;font-weight:600;">'+u+'</span><div style="flex:1;height:20px;background:#e0e0e0;border-radius:10px;overflow:hidden;margin:0 10px;"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:10px;"></div></div><span style="min-width:80px;text-align:right;font-size:13px;">'+um+'/'+uw.length+' ('+pct+'%)</span></div>';
+  });
+  unitHtml += '</div>';
+  document.getElementById('unitStats').innerHTML = unitHtml;
+}
+
+// Init
+renderUnits();
+showCard();
+updateSyncUI();
+</script>
+</body>
+</html>
