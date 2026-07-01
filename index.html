@@ -99,6 +99,27 @@ h1 { text-align: center; color: #fff; margin-bottom: 20px; font-size: 1.8em; tex
 .speak-btn { margin-top: 15px; padding: 10px 24px; border: 2px solid rgba(255,255,255,0.7); border-radius: 20px; background: rgba(255,255,255,0.2); color: #fff; font-size: 16px; cursor: pointer; transition: all 0.3s; }
 .speak-btn:hover { background: rgba(255,255,255,0.4); transform: scale(1.05); }
 .speak-btn:active { transform: scale(0.95); }
+/* Daily Exercise */
+.exercise-item { margin-bottom: 20px; padding: 16px; background: #f9f5ff; border-radius: 12px; border-left: 4px solid #764ba2; }
+.exercise-item .q-num { font-weight: 700; color: #764ba2; margin-bottom: 8px; }
+.exercise-item .q-sentence { font-size: 15px; color: #333; line-height: 1.8; margin-bottom: 8px; }
+.exercise-item input { padding: 6px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 15px; width: 120px; transition: border-color 0.3s; }
+.exercise-item input:focus { border-color: #764ba2; outline: none; }
+.exercise-item input.correct { border-color: #00c853; background: #e8f5e9; }
+.exercise-item input.wrong { border-color: #ff5252; background: #ffebee; }
+.exercise-item .q-hint { font-size: 13px; color: #999; margin-top: 4px; }
+.exercise-item .q-answer { font-size: 13px; color: #2e7d32; margin-top: 4px; display: none; }
+.exercise-item .q-answer.show { display: block; }
+.exercise-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+.exercise-score { text-align: center; padding: 30px; }
+.exercise-score .score-num { font-size: 3em; font-weight: bold; color: #764ba2; }
+.exercise-score .score-label { font-size: 1.1em; color: #666; margin-top: 8px; }
+.exercise-btns { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+.exercise-btns button { padding: 12px 28px; border: none; border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+.btn-submit { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+.btn-submit:hover { opacity: 0.9; }
+.btn-retry { background: #f5f5f5; color: #764ba2; border: 2px solid #764ba2; }
+.btn-retry:hover { background: #f0e6ff; }
 </style>
 </head>
 <body>
@@ -116,6 +137,7 @@ h1 { text-align: center; color: #fff; margin-bottom: 20px; font-size: 1.8em; tex
 
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('study')">📖 学习</button>
+  <button class="tab-btn" onclick="switchTab('exercise')">✏️ 每日一练</button>
   <button class="tab-btn" onclick="switchTab('checkin')">✅ 每日打卡</button>
   <button class="tab-btn" onclick="switchTab('review')">📝 未掌握汇总</button>
   <button class="tab-btn" onclick="switchTab('stats')">📊 统计</button>
@@ -176,6 +198,21 @@ h1 { text-align: center; color: #fff; margin-bottom: 20px; font-size: 1.8em; tex
   <div class="stats-grid" id="statsGrid"></div>
   <h3 style="margin:20px 0 10px;">各单元掌握情况</h3>
   <div id="unitStats"></div>
+</div>
+
+<!-- Exercise Panel -->
+<div class="panel" id="panel-exercise">
+  <div class="exercise-header">
+    <h2>✏️ 每日一练</h2>
+    <span class="tip" id="exerciseUnit"></span>
+  </div>
+  <p class="tip" style="margin-bottom:15px;">根据句意和提示，用所给单词的正确形式填空。</p>
+  <div id="exerciseList"></div>
+  <div class="exercise-btns" id="exerciseBtns">
+    <button class="btn-submit" onclick="submitExercise()">📝 提交答案</button>
+    <button class="btn-retry" onclick="newExercise()">🔄 换一组题</button>
+  </div>
+  <div class="exercise-score" id="exerciseScore" style="display:none;"></div>
 </div>
 </div>
 
@@ -865,10 +902,11 @@ function importData(event) {
 // ====== CORE APP ======
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(function(btn, i) {
-    btn.classList.toggle('active', ['study','checkin','review','stats'][i] === tab);
+    btn.classList.toggle('active', ['study','exercise','checkin','review','stats'][i] === tab);
   });
   document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
   document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'exercise') renderExercise();
   if (tab === 'checkin') renderCheckin();
   if (tab === 'review') renderReviewList();
   if (tab === 'stats') renderStats();
@@ -1039,6 +1077,181 @@ function renderStats() {
   });
   unitHtml += '</div>';
   document.getElementById('unitStats').innerHTML = unitHtml;
+}
+
+// ====== DAILY EXERCISE MODULE ======
+// Question bank: [sentence_with_blank, base_word, correct_answer, unit]
+var EXERCISE_BANK = [
+// Unit 1
+["She is an _____ (honest) girl. Everyone trusts her.","honest","honest","Unit 1"],
+["He is _____ (humour) and often tells jokes.","humour","humorous","Unit 1"],
+["The boy is very brave. He saved the girl from _____ (dangerous).","dangerous","danger","Unit 1"],
+["She always cares about others. She is a _____ (care) person.","care","caring","Unit 1"],
+["What are your _____ (think) on this matter?","think","thoughts","Unit 1"],
+["He is the _____ (funny) boy in our class.","funny","funniest","Unit 1"],
+["She has a good sense of _____ (humorous).","humorous","humour","Unit 1"],
+["The teacher _____ (encourage) us to work harder last week.","encourage","encouraged","Unit 1"],
+["My best friend is _____ (trust). I can tell her anything.","trust","trustworthy","Unit 1"],
+["He is _____ (energy) and enjoys playing sports.","energy","energetic","Unit 1"],
+["I _____ (belief) you can do it if you try your best.","belief","believe","Unit 1"],
+["She is _____ (patience) enough to wait for hours.","patience","patient","Unit 1"],
+// Unit 2
+["Our school offers many _____ (activity) after class.","activity","activities","Unit 2"],
+["The programme is _____ (bore). I want to change the channel.","bore","boring","Unit 2"],
+["Learning a _____ (foreign) language is important.","foreign","foreign","Unit 2"],
+["I look forward to _____ (hear) from you soon.","hear","hearing","Unit 2"],
+["We should pay attention to _____ (protect) the environment.","protect","protecting","Unit 2"],
+["He is _____ (aware) of the importance of study.","aware","aware","Unit 2"],
+["She gave us some useful _____ (suggest).","suggest","suggestions","Unit 2"],
+["We need to _____ (improvement) our English skills.","improvement","improve","Unit 2"],
+["The teacher asked us to develop _____ (we) interests.","we","our","Unit 2"],
+["Students should _____ (careful) check their answers.","careful","carefully","Unit 2"],
+// Unit 3
+["He is a _____ (success) businessman.","success","successful","Unit 3"],
+["Thomas Edison was a great _____ (invent).","invent","inventor","Unit 3"],
+["Learning is a _____ (life) journey.","life","lifelong","Unit 3"],
+["She is _____ (curiosity) about everything around her.","curiosity","curious","Unit 3"],
+["There are _____ (count) stars in the sky.","count","countless","Unit 3"],
+["The _____ (invent) of the telephone changed the world.","invent","invention","Unit 3"],
+["Can you _____ (translation) this sentence into English?","translation","translate","Unit 3"],
+["He taught _____ (he) to play the piano.","he","himself","Unit 3"],
+["Please read the text _____ (loud).","loud","aloud","Unit 3"],
+["Make sure you _____ (pronunciation) the words correctly.","pronunciation","pronounce","Unit 3"],
+["His _____ (great) comes from his hard work.","great","greatness","Unit 3"],
+["It is _____ (possibility) to finish it on time.","possibility","possible","Unit 3"],
+// Unit 4
+["He made many _____ (mistake) in the exam.","mistake","mistakes","Unit 4"],
+["It is _____ (possible) to finish this in one day.","possible","impossible","Unit 4"],
+["Please read the _____ (instruct) before you start.","instruct","instructions","Unit 4"],
+["She is _____ (luck) to have such good friends.","luck","lucky","Unit 4"],
+["I decided to take a DIY course _____ (instead) of watching TV.","instead","instead","Unit 4"],
+["You should _____ (reduction) the waste in daily life.","reduction","reduce","Unit 4"],
+["The _____ (produce) are made by hand.","produce","products","Unit 4"],
+["I was _____ (surprise) to see him at the party.","surprise","surprised","Unit 4"],
+["He is a _____ (bear) artist. He started painting at age 3.","bear","born","Unit 4"],
+["This knife is very _____ (danger). Be careful!","danger","dangerous","Unit 4"],
+// Unit 5
+["Giant pandas face _____ (seriously) problems in the wild.","seriously","serious","Unit 5"],
+["The government has taken _____ (act) to protect wildlife.","act","action","Unit 5"],
+["It is _____ (mean) to help protect animals.","mean","meaningful","Unit 5"],
+["The number of pandas is _____ (increase) thanks to protection.","increase","increasing","Unit 5"],
+["We should protect animals in _____ (dangerous).","dangerous","danger","Unit 5"],
+["Pollution and _____ (ill) are killing many wild animals.","ill","illness","Unit 5"],
+["_____ (hunt) is not allowed in nature reserves.","hunt","Hunting","Unit 5"],
+["She can _____ (easy) finish the task by herself.","easy","easily","Unit 5"],
+["The baby panda weighed only 100 grams at _____ (born).","born","birth","Unit 5"],
+["They _____ (main) live on bamboo.","main","mainly","Unit 5"],
+// Unit 6
+["The _____ (temperate) dropped to -5 degrees last night.","temperate","temperature","Unit 6"],
+["It is a _____ (sun) day today. Let us go outside.","sun","sunny","Unit 6"],
+["Spring is the season of new _____ (grow).","grow","growth","Unit 6"],
+["It happened so _____ (sudden) that nobody expected it.","sudden","suddenly","Unit 6"],
+["The wind is _____ (blow) hard outside.","blow","blowing","Unit 6"],
+["It is _____ (please) to walk along the river in autumn.","please","pleasant","Unit 6"],
+["The lake was _____ (freeze) in winter.","freeze","frozen","Unit 6"],
+["She _____ (hide) behind the door when I came in.","hide","hid","Unit 6"],
+["He _____ (division) the cake into eight pieces.","division","divided","Unit 6"],
+["There is a _____ (connect) between weather and our moods.","connect","connection","Unit 6"],
+// Unit 7
+["Wetlands are important _____ (ecosystem).","ecosystem","ecosystems","Unit 7"],
+["We must _____ (prevention) water pollution.","prevention","prevent","Unit 7"],
+["Cutting down trees _____ (lead) to more floods.","lead","leads","Unit 7"],
+["The factory caused serious _____ (damage) to the river.","damage","damage","Unit 7"],
+["It is important to _____ (creation) a balanced ecosystem.","creation","create","Unit 7"],
+["We should have the _____ (know) to protect nature.","know","knowledge","Unit 7"],
+["The birds _____ (sad) lost their home because of pollution.","sad","sadly","Unit 7"],
+["We should find ways to _____ (solution) environmental problems.","solution","solve","Unit 7"],
+["Wetlands act as the _____ (kidney) of the earth.","kidney","kidneys","Unit 7"],
+["The _____ (environment) problems are getting worse.","environment","environmental","Unit 7"],
+// Unit 8
+["An earthquake is a natural _____ (disastrous).","disastrous","disaster","Unit 8"],
+["She felt _____ (nerve) before the exam.","nerve","nervous","Unit 8"],
+["The building was _____ (silence) after the earthquake.","silence","silent","Unit 8"],
+["The firemen tried their best to _____ (put) out the fire.","put","put","Unit 8"],
+["She was too _____ (weakness) to walk after the accident.","weakness","weak","Unit 8"],
+["They ran in all _____ (direct) when the earthquake happened.","direct","directions","Unit 8"],
+["Please keep _____ (calmly). Do not panic.","calmly","calm","Unit 8"],
+["The typhoon _____ (heavy) damaged many houses.","heavy","heavily","Unit 8"],
+["We should try to _____ (avoidance) natural disasters.","avoidance","avoid","Unit 8"],
+["The weather report _____ (warning) people about the coming storm.","warning","warned","Unit 8"],
+["He _____ (shout) for help when the building started to shake.","shout","shouted","Unit 8"],
+["Many people became _____ (home) after the flood.","home","homeless","Unit 8"],
+];
+
+var currentExerciseSet = [];
+var exerciseSubmitted = false;
+
+function renderExercise() {
+  if (currentExerciseSet.length === 0 || exerciseSubmitted) {
+    newExercise();
+  }
+}
+
+function newExercise() {
+  exerciseSubmitted = false;
+  document.getElementById('exerciseScore').style.display = 'none';
+  document.getElementById('exerciseBtns').style.display = 'flex';
+  // Randomly pick 10 questions from the bank
+  var pool = EXERCISE_BANK.slice();
+  currentExerciseSet = [];
+  for (var i = 0; i < 10 && pool.length > 0; i++) {
+    var idx = Math.floor(Math.random() * pool.length);
+    currentExerciseSet.push(pool[idx]);
+    pool.splice(idx, 1);
+  }
+  renderExerciseItems();
+}
+
+function renderExerciseItems() {
+  var html = '';
+  currentExerciseSet.forEach(function(q, i) {
+    var parts = q[0].split('_____');
+    html += '<div class="exercise-item" id="exItem' + i + '">' +
+      '<div class="q-num">第 ' + (i+1) + ' 题 <small style="color:#999">(' + q[3] + ')</small></div>' +
+      '<div class="q-sentence">' + parts[0] + '<input type="text" id="exInput' + i + '" autocomplete="off" placeholder="填写"> ' + (parts[1] || '') + '</div>' +
+      '<div class="q-hint">提示: ' + q[1] + '</div>' +
+      '<div class="q-answer" id="exAnswer' + i + '">正确答案: <strong>' + q[2] + '</strong></div>' +
+      '</div>';
+  });
+  document.getElementById('exerciseList').innerHTML = html;
+  document.getElementById('exerciseUnit').textContent = '共10题，随机抽取';
+}
+
+function submitExercise() {
+  if (exerciseSubmitted) return;
+  exerciseSubmitted = true;
+  var correct = 0;
+  currentExerciseSet.forEach(function(q, i) {
+    var input = document.getElementById('exInput' + i);
+    var answer = q[2];
+    var userVal = input.value.trim();
+    var answerEl = document.getElementById('exAnswer' + i);
+    answerEl.classList.add('show');
+    if (userVal.toLowerCase() === answer.toLowerCase()) {
+      correct++;
+      input.classList.add('correct');
+    } else {
+      input.classList.add('wrong');
+    }
+    input.disabled = true;
+  });
+  // Show score
+  var scoreHtml = '<div class="score-num">' + correct + ' / 10</div>' +
+    '<div class="score-label">' + getScoreComment(correct) + '</div>';
+  document.getElementById('exerciseScore').innerHTML = scoreHtml;
+  document.getElementById('exerciseScore').style.display = 'block';
+  // Save exercise history
+  var history = getData('exerciseHistory', []);
+  history.push({ date: getTodayStr(), score: correct, total: 10 });
+  setData('exerciseHistory', history);
+}
+
+function getScoreComment(score) {
+  if (score === 10) return '🎉 满分！太棒了！';
+  if (score >= 8) return '👍 优秀！继续保持！';
+  if (score >= 6) return '😊 不错，还有提升空间！';
+  if (score >= 4) return '💪 加油，多复习几遍！';
+  return '📚 需要多看看单词卡哦！';
 }
 
 // Init
